@@ -1,5 +1,5 @@
 # Django Stripe Integration
-
+![app_ss](stripe-integration-app/images/stripe-integration-ss.png)
 This project demonstrates how to seamlessly integrate Stripe for secure online payment processing within your Django web application. Stripe is a leading payment gateway trusted by businesses worldwide. This README provides a detailed guide to set up and utilize the Django Stripe Integration effectively.
 
 ## Table of Contents
