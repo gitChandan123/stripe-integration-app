@@ -1,7 +1,6 @@
-
 # Django Stripe Integration
 
-This project demonstrates how to integrate Stripe for handling payments in a Django web application. Stripe is a popular payment gateway that allows businesses to accept payments online. This README file will guide you through setting up and using the Django Stripe Integration.
+This project demonstrates how to seamlessly integrate Stripe for secure online payment processing within your Django web application. Stripe is a leading payment gateway trusted by businesses worldwide. This README provides a detailed guide to set up and utilize the Django Stripe Integration effectively.
 
 ## Table of Contents
 
@@ -14,54 +13,98 @@ This project demonstrates how to integrate Stripe for handling payments in a Dja
 7. [Testing Payments](#testing-payments)
 8. [Contributing](#contributing)
 9. [License](#license)
+10. [Features](#features)
+11. [Troubleshooting](#troubleshooting)
+12. [Future Enhancements](#future-enhancements)
+13. [Acknowledgements](#acknowledgements)
 
 ---
 
 ## 1. Prerequisites
 
-Before starting, make sure you have the following installed:
+Before diving in, ensure you have the following installed:
 
-- Python 3.x
-- Django 4.x
-- Stripe Account (for API keys)
-- Virtual Environment (`venv`)
-
-If you don't have a Stripe account, you can create one at [Stripe](https://stripe.com/).
+-   **Python 3.x** (Download from [https://www.python.org/downloads/](https://www.python.org/downloads/))
+-   **Django 4.x** (Install using `pip install django==4.x`)
+-   **Stripe Account** (Create one at [https://stripe.com/](https://stripe.com/))
+-   **Virtual Environment** (Create using `python -m venv <venv_name>` and activate it with `source <venv_name>/bin/activate` (Windows: `<venv_name>\Scripts\activate`))
 
 ## 2. Installation
 
-1. **Clone the repository:**
+1.  **Clone the Repository:**
 
-   ```bash
-   git clone https://github.com/gitChandan123/stripe-integration-app.git
-   cd stripe-integration-app
+    ```bash
+    git clone [https://github.com/gitChandan123/stripe-integration-app.git](https://github.com/gitChandan123/stripe-integration-app.git)
+    cd stripe-integration-app
+    ```
 
-## 10. Features
+2.  **Install Dependencies:**
 
-- **Easy Integration**: Seamlessly integrate Stripe payments into your Django app.
-- **Secure Payments**: Utilize Stripe's secure payment processing.
-- **Customizable**: Easily customizable to fit your specific needs.
-- **Webhook Handling**: Efficiently handle Stripe webhooks for events like payment success, failure, etc.
+    ```bash
+    pip install -r requirements.txt # Assumes a requirements.txt file exists
+    ```
 
-## 11. Troubleshooting
+## 3. Setup Stripe API Keys
 
-If you encounter any issues during the setup or usage of this project, consider the following steps:
+1.  **Create a Stripe Account:** If you haven't already, visit [https://stripe.com/](https://stripe.com/) and sign up.
+2.  **Retrieve API Keys:** In your Stripe dashboard, go to **Developers** -> **API keys**.
+3.  **Securely Store Keys:** In your Django project's `settings.py`:
 
-1. **Check Dependencies**: Ensure all dependencies are installed correctly.
-2. **Verify API Keys**: Double-check your Stripe API keys in your Django settings.
-3. **Review Logs**: Check the Django and Stripe logs for any errors or warnings.
-4. **Consult Documentation**: Refer to the official [Stripe Documentation](https://stripe.com/docs) and [Django Documentation](https://docs.djangoproject.com/) for more information.
-5. **Seek Help**: If you're still having trouble, feel free to open an issue on this repository or seek help on relevant forums.
+    ```python
+    import os
+    STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "<YOUR_PUBLISHABLE_KEY>")
+    STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "<YOUR_SECRET_KEY>")
+    ```
 
-## 12. Future Enhancements
+    **Important:** Use environment variables for production. **NEVER** commit API keys directly to your repository.
 
-- **Subscription Management**: Add features to handle subscription-based payments.
-- **Enhanced Security**: Implement additional security measures such as 3D Secure.
-- **Improved UI**: Enhance the user interface for a better user experience.
-- **Analytics Dashboard**: Create a dashboard to track and analyze payment data.
+## 4. Configure Django
 
-## 13. Acknowledgements
+1.  **Add `stripe` App:** In `settings.py`:
 
-- Thanks to the [Django](https://www.djangoproject.com/) community for their continuous support.
-- Special thanks to the [Stripe](https://stripe.com/) team for their comprehensive API and documentation.
-- Thanks to all the contributors who have helped improve this project.
+    ```python
+    INSTALLED_APPS = [
+        # ... other apps
+        'stripe',
+        # ...
+    ]
+    ```
+
+2.  **Webhook URL (Optional):** Define a URL for the webhook endpoint in `settings.py`:
+
+    ```python
+    import os
+    STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "<YOUR_WEBHOOK_SECRET>")
+    ```
+
+## 5. Stripe Webhook (Example)
+
+```python
+from django.conf import settings
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+import stripe
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        return HttpResponse(status=400)
+
+    if event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        print("PaymentIntent successful:", payment_intent['id'])
+        # Handle successful payment
+
+    return HttpResponse(status=200)
